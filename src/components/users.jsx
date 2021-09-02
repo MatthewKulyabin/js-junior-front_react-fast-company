@@ -1,6 +1,7 @@
-import React from 'react';
-import { useState } from 'react/cjs/react.development';
+import React, { useState } from 'react';
+
 import api from '../api';
+import SearchStatus from './searchStatus';
 import UsersTable from './usersTable';
 
 const Users = () => {
@@ -10,19 +11,9 @@ const Users = () => {
     setUsers(users.filter((user) => user._id !== id));
   };
 
-  const renderPhrase = () => {
-    return !users.length ? (
-      <h1 className=" h1 badge m-2 bg-danger">Никто с тобой не тусанёт</h1>
-    ) : (
-      <h1 className="badge m-2 bg-primary">
-        {users.length} человек тусанет с тобой сегодня
-      </h1>
-    );
-  };
-
   return (
     <>
-      {renderPhrase()}
+      <SearchStatus usersCount={users.length} />
 
       {!!users.length && (
         <UsersTable users={users} handleDelete={handleDelete} />
