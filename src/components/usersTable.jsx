@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import User from './user';
 
@@ -23,6 +24,11 @@ const UsersTable = ({ users, handleDelete }) => {
       </tbody>
     </table>
   );
+};
+
+UsersTable.propTypes = {
+  users: PropTypes.array.isRequired,
+  handleDelete: PropTypes.func.isRequired,
 };
 
 export default UsersTable;

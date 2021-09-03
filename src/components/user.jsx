@@ -1,6 +1,7 @@
 import React from 'react';
-import Bookmark from './bookmark';
+import PropTypes from 'prop-types';
 
+import Bookmark from './bookmark';
 import Qualitie from './qualitie';
 
 function User({ user, onDelete }) {
@@ -36,5 +37,10 @@ function User({ user, onDelete }) {
     </tr>
   );
 }
+
+User.propTypes = {
+  user: PropTypes.object.isRequired,
+  onDelete: PropTypes.func.isRequired,
+};
 
 export default User;
