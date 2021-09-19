@@ -2,21 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import Bookmark from './bookmark';
-import Qualitie from './qualitie';
+import QualitiesList from './qualitiesList';
 
-function User({ user, onDelete }) {
+const User = ({ user, onDelete }) => {
   return (
     <tr key={user._id}>
       <td>{user.name}</td>
       <td>
-        {user.qualities.map((qualitie) => (
-          <Qualitie
-            key={qualitie._id}
-            id={qualitie._id}
-            color={qualitie.color}
-            name={qualitie.name}
-          />
-        ))}
+        <QualitiesList qualities={user.qualities} />
       </td>
       <td id={user.profession._id}>{user.profession.name}</td>
       <td>{user.completedMeetings}</td>
@@ -24,19 +17,10 @@ function User({ user, onDelete }) {
       <td>
         <Bookmark />
       </td>
-      <td>
-        <button
-          onClick={() => {
-            onDelete(user._id);
-          }}
-          className="btn btn-danger"
-        >
-          Delete
-        </button>
-      </td>
+      <td></td>
     </tr>
   );
-}
+};
 
 User.propTypes = {
   user: PropTypes.object.isRequired,

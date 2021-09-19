@@ -133,9 +133,9 @@ const users = [
 
 const fetchAll = () =>
   new Promise((resolve) => {
-    setTimeout(function () {
+    setTimeout(() => {
       resolve(users);
-    }, 2000);
+    }, 500);
   });
 
 export default {

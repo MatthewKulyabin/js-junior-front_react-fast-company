@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-function GroupList({
+const GroupList = ({
   items,
   valueProperty,
   contentProperty,
   onItemSelect,
   selectedItem,
-}) {
+}) => {
   let convertedItems = {};
   items instanceof Array &&
     items.forEach((item) => {
@@ -29,7 +29,7 @@ function GroupList({
       ))}
     </ul>
   );
-}
+};
 
 GroupList.defaultProps = {
   valueProperty: '_id',

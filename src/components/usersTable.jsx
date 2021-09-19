@@ -1,34 +1,47 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import User from './user';
+import Bookmark from './bookmark';
+import QualitiesList from './qualitiesList';
+import Table from './table';
+import TableHeader from './tableHeader';
+import TableBody from './tableBody';
 
-const UsersTable = ({ users, handleDelete }) => {
-  return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th scope="col">Имя</th>
-          <th scope="col">Качества</th>
-          <th scope="col">Профессия</th>
-          <th scope="col">Встретился, раз</th>
-          <th scope="col">Оценка</th>
-          <th scope="col">Избранное</th>
-          <th scope="col"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user) => (
-          <User key={user._id} user={{ ...user }} onDelete={handleDelete} />
-        ))}
-      </tbody>
-    </table>
-  );
+const UsersTable = ({ users, onSort, selectedSort, handleDelete }) => {
+  const columns = {
+    name: { path: 'name', name: 'Имя' },
+    qualities: {
+      name: 'Качества',
+      component: (user) => <QualitiesList qualities={user.qualities} />,
+    },
+    professions: { path: 'profession.name', name: 'Профессия' },
+    completedMeetings: {
+      path: 'completedMeetings',
+      name: 'Встретился раз',
+    },
+    rate: { path: 'rate', name: 'Оценка' },
+    bookmark: { path: 'bookmark', name: 'Избранное', component: <Bookmark /> },
+    delete: {
+      component: (user) => (
+        <button
+          onClick={() => {
+            handleDelete(user._id);
+          }}
+          className="btn btn-danger"
+        >
+          Delete
+        </button>
+      ),
+    },
+  };
+  return <Table {...{ onSort, selectedSort, columns, data: users }} />;
 };
 
 UsersTable.propTypes = {
   users: PropTypes.array.isRequired,
   handleDelete: PropTypes.func.isRequired,
+  onSort: PropTypes.func.isRequired,
+  selectedSort: PropTypes.object.isRequired,
 };
 
 export default UsersTable;

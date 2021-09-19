@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import _ from 'lodash';
 
 import api from '../api';
 import { PAGE_SIZE } from '../core/CONSTS';
@@ -12,6 +13,7 @@ const Users = () => {
   const [users, setUsers] = useState();
   const [professions, setProfessions] = useState();
   const [selectedProf, setSelectedProf] = useState();
+  const [sortBy, setSortBy] = useState({ path: 'name', order: 'asc' });
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -32,13 +34,18 @@ const Users = () => {
     setUsers(users.filter((user) => user._id !== id));
   };
 
+  const handleSort = (item) => {
+    setSortBy(item);
+  };
+
   const filteredUsers = selectedProf
     ? users.filter(
         (user) =>
           JSON.stringify(user.profession) === JSON.stringify(selectedProf)
       )
     : users;
-  const usersPaged = filteredUsers && paginate(filteredUsers, page, PAGE_SIZE);
+  const sortedUsers = _.orderBy(filteredUsers, [sortBy.path], [sortBy.order]);
+  const usersPaged = sortedUsers && paginate(sortedUsers, page, PAGE_SIZE);
 
   return usersPaged ? (
     <div className="d-flex">
@@ -58,14 +65,21 @@ const Users = () => {
         </div>
       )}
       <div className="d-flex flex-column">
-        <SearchStatus usersCount={filteredUsers.length} />
-        {!!filteredUsers.length && (
-          <UsersTable users={usersPaged} handleDelete={handleDelete} />
+        {!!sortedUsers.length && (
+          <>
+            <SearchStatus usersCount={sortedUsers.length} />
+            <UsersTable
+              users={usersPaged}
+              onSort={handleSort}
+              selectedSort={sortBy}
+              handleDelete={handleDelete}
+            />
+          </>
         )}
         <div className="d-flex justify-content-center">
           <Pagination
             page={page}
-            pagesNumber={pagersNumber(filteredUsers.length, PAGE_SIZE)}
+            pagesNumber={pagersNumber(sortedUsers.length, PAGE_SIZE)}
             onPagination={handlePagination}
           />
         </div>

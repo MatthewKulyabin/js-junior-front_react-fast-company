@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-function SearchStatus({ usersCount }) {
+const SearchStatus = ({ usersCount }) => {
   return !usersCount ? (
     <h1 className="badge m-2 bg-danger">Никто с тобой не тусанёт</h1>
   ) : (
@@ -9,7 +9,7 @@ function SearchStatus({ usersCount }) {
       {usersCount} человек тусанет с тобой сегодня
     </h1>
   );
-}
+};
 
 SearchStatus.propTypes = {
   usersCount: PropTypes.number.isRequired,

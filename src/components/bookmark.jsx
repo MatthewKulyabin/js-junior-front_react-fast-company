@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 
-function Bookmark(props) {
-  const [bookmarked, setBokmarked] = useState(false);
+const Bookmark = (props) => {
+  const [bookmarked, setBokmarked] = useState(() => false);
 
   return (
-    <div onClick={() => setBokmarked((prev) => !prev)}>
+    <div
+      onClick={() => {
+        setBokmarked((prev) => !prev);
+      }}
+    >
       {!bookmarked ? (
         <i className="bi bi-bookmark btn"></i>
       ) : (
@@ -12,6 +16,6 @@ function Bookmark(props) {
       )}
     </div>
   );
-}
+};
 
 export default Bookmark;

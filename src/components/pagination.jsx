@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import Page from './page';
 
-function Pagination({ page, pagesNumber, onPagination }) {
+const Pagination = ({ page, pagesNumber, onPagination }) => {
   if (pagesNumber === 1) return null;
 
   const pages = [];
@@ -25,7 +25,7 @@ function Pagination({ page, pagesNumber, onPagination }) {
       </ul>
     </nav>
   );
-}
+};
 Pagination.propTypes = {
   page: PropTypes.number.isRequired,
   pagesNumber: PropTypes.number.isRequired,
