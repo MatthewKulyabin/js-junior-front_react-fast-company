@@ -1,92 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import _ from 'lodash';
+import { Route, Switch } from 'react-router';
 
 import api from '../api';
-import { PAGE_SIZE } from '../core/CONSTS';
-import { pagersNumber, paginate } from '../core/utils';
-import GroupList from './groupList';
-import Pagination from './pagination';
-import SearchStatus from './searchStatus';
-import UsersTable from './usersTable';
+import UserPage from './userPage';
+import UsersList from './usersList';
 
 const Users = () => {
   const [users, setUsers] = useState();
   const [professions, setProfessions] = useState();
-  const [selectedProf, setSelectedProf] = useState();
-  const [sortBy, setSortBy] = useState({ path: 'name', order: 'asc' });
-  const [page, setPage] = useState(0);
 
   useEffect(() => {
     api.users.fetchAll().then((data) => setUsers(data));
     api.professions.fetchAll().then((data) => setProfessions(data));
   }, []);
 
-  const handleProfessionSelect = (item) => {
-    setSelectedProf(item);
-    setPage(0);
-  };
-
-  const handlePagination = (index) => {
-    setPage(index);
-  };
-
   const handleDelete = (id) => {
     setUsers(users.filter((user) => user._id !== id));
   };
 
-  const handleSort = (item) => {
-    setSortBy(item);
-  };
-
-  const filteredUsers = selectedProf
-    ? users.filter(
-        (user) =>
-          JSON.stringify(user.profession) === JSON.stringify(selectedProf)
-      )
-    : users;
-  const sortedUsers = _.orderBy(filteredUsers, [sortBy.path], [sortBy.order]);
-  const usersPaged = sortedUsers && paginate(sortedUsers, page, PAGE_SIZE);
-
-  return usersPaged ? (
-    <div className="d-flex">
-      {professions && (
-        <div className="d-flex flex-column flex-shrink-0 p-3">
-          <GroupList
-            selectedItem={selectedProf}
-            items={professions}
-            onItemSelect={handleProfessionSelect}
-          />
-          <button
-            className="btn btn-secondary mt-2"
-            onClick={() => setSelectedProf(null)}
-          >
-            Все профессии
-          </button>
-        </div>
-      )}
-      <div className="d-flex flex-column">
-        {!!sortedUsers.length && (
-          <>
-            <SearchStatus usersCount={sortedUsers.length} />
-            <UsersTable
-              users={usersPaged}
-              onSort={handleSort}
-              selectedSort={sortBy}
-              handleDelete={handleDelete}
-            />
-          </>
-        )}
-        <div className="d-flex justify-content-center">
-          <Pagination
-            page={page}
-            pagesNumber={pagersNumber(sortedUsers.length, PAGE_SIZE)}
-            onPagination={handlePagination}
-          />
-        </div>
-      </div>
-    </div>
-  ) : (
-    <></>
+  return (
+    <>
+      <Switch>
+        <Route
+          exact
+          path="/users"
+          render={() =>
+            (users && professions && (
+              <UsersList {...{ users, professions }} onDelete={handleDelete} />
+            )) || <h1>Loading</h1>
+          }
+        />
+        <Route path="/users/:id" component={UserPage} />
+      </Switch>
+    </>
   );
 };
 

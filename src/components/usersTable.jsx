@@ -4,10 +4,8 @@ import PropTypes from 'prop-types';
 import Bookmark from './bookmark';
 import QualitiesList from './qualitiesList';
 import Table from './table';
-import TableHeader from './tableHeader';
-import TableBody from './tableBody';
 
-const UsersTable = ({ users, onSort, selectedSort, handleDelete }) => {
+const UsersTable = ({ users, onSort, selectedSort, onDelete }) => {
   const columns = {
     name: { path: 'name', name: 'Имя' },
     qualities: {
@@ -25,7 +23,7 @@ const UsersTable = ({ users, onSort, selectedSort, handleDelete }) => {
       component: (user) => (
         <button
           onClick={() => {
-            handleDelete(user._id);
+            onDelete(user._id);
           }}
           className="btn btn-danger"
         >
@@ -39,7 +37,7 @@ const UsersTable = ({ users, onSort, selectedSort, handleDelete }) => {
 
 UsersTable.propTypes = {
   users: PropTypes.array.isRequired,
-  handleDelete: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
   onSort: PropTypes.func.isRequired,
   selectedSort: PropTypes.object.isRequired,
 };
