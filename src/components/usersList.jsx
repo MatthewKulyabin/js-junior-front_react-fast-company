@@ -7,14 +7,17 @@ import GroupList from './groupList';
 import Pagination from './pagination';
 import SearchStatus from './searchStatus';
 import UsersTable from './usersTable';
+import TextField from './textField';
 
 const UsersList = ({ users, professions, onDelete }) => {
   const [selectedProf, setSelectedProf] = useState();
   const [sortBy, setSortBy] = useState({ path: 'name', order: 'asc' });
+  const [searchUser, setSearchUser] = useState('');
   const [page, setPage] = useState(0);
 
   const handleProfessionSelect = (item) => {
     setSelectedProf(item);
+    setSearchUser('');
     setPage(0);
   };
 
@@ -26,13 +29,24 @@ const UsersList = ({ users, professions, onDelete }) => {
     setSortBy(item);
   };
 
+  const handleSearch = ({ target }) => {
+    setSearchUser(target.value);
+    setSelectedProf(null);
+  };
+
   const filteredUsers = selectedProf
     ? users.filter(
         (user) =>
           JSON.stringify(user.profession) === JSON.stringify(selectedProf)
       )
     : users;
-  const sortedUsers = _.orderBy(filteredUsers, [sortBy.path], [sortBy.order]);
+  const foundedUsers =
+    !selectedProf &&
+    searchUser &&
+    users.filter((user) => user.name.includes(searchUser)).length
+      ? users.filter((user) => user.name.includes(searchUser))
+      : filteredUsers;
+  const sortedUsers = _.orderBy(foundedUsers, [sortBy.path], [sortBy.order]);
   const usersPaged = sortedUsers && paginate(sortedUsers, page, PAGE_SIZE);
 
   return usersPaged ? (
@@ -46,7 +60,9 @@ const UsersList = ({ users, professions, onDelete }) => {
           />
           <button
             className="btn btn-secondary mt-2"
-            onClick={() => setSelectedProf(null)}
+            onClick={() => {
+              setSelectedProf(null);
+            }}
           >
             Все профессии
           </button>
@@ -56,6 +72,13 @@ const UsersList = ({ users, professions, onDelete }) => {
         {!!sortedUsers.length && (
           <>
             <SearchStatus usersCount={sortedUsers.length} />
+            <TextField
+              placeholder="Search..."
+              name="searchByName"
+              inputClass={false}
+              value={searchUser}
+              onChange={handleSearch}
+            />
             <UsersTable
               users={usersPaged}
               onSort={handleSort}
