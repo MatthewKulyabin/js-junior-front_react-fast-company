@@ -10,8 +10,13 @@ const TextField = ({
   onChange,
   error,
   inputClass = true,
+  rows,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = ({ target }) => {
+    onChange({ name: target.name, value: target.value });
+  };
 
   const getInputClasses = () => {
     return (
@@ -28,17 +33,32 @@ const TextField = ({
     <div className="mb-4">
       <label htmlFor={name}>{label}</label>
       <div className="input-group has-validation">
-        <input
-          id={name}
-          {...{
-            type: showPassword ? 'text' : type,
-            placeholder: placeholder ? placeholder : '',
-            name,
-            value,
-            onChange,
-          }}
-          className={getInputClasses()}
-        />
+        {(rows && (
+          <textarea
+            id={name}
+            {...{
+              type: showPassword ? 'text' : type,
+              placeholder: placeholder ? placeholder : '',
+              name,
+              value,
+              onChange: handleChange,
+            }}
+            className={getInputClasses()}
+          ></textarea>
+        )) || (
+          <input
+            id={name}
+            {...{
+              type: showPassword ? 'text' : type,
+              placeholder: placeholder ? placeholder : '',
+              name,
+              value,
+              onChange: handleChange,
+            }}
+            className={getInputClasses()}
+          />
+        )}
+
         {type === 'password' && (
           <button
             className="btn btn-outline-secondary"

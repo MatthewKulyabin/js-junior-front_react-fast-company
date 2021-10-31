@@ -12,7 +12,15 @@ export const validator = (data, config) => {
     let statusValidate;
     switch (validateMethod) {
       case 'isRequired':
-        statusValidate = !data.trim();
+        if (typeof data === 'string') {
+          statusValidate = !data.trim();
+        }
+        if (typeof data === 'object') {
+          statusValidate = !Object.keys(data).length;
+        }
+        if (typeof data === 'boolean') {
+          statusValidate = !data;
+        }
         break;
       case 'isEmail':
         const emailRegExp = /^\S+@\S+\.\S+$/g;
@@ -47,4 +55,21 @@ export const validator = (data, config) => {
   }
 
   return errors;
+};
+
+export const getTimeDifference = (mls) => {
+  mls = +mls;
+  const currentDate = new Date();
+  const date = new Date(mls);
+  const diffTime = Math.abs(currentDate - date);
+  const diffDays = Math.ceil(diffTime / (1000 * 60));
+  if (diffDays <= 5) return ' 1 minute ago ';
+  if (diffDays <= 10) return ' 5 minutes ago ';
+  if (diffDays <= 30) return ' 10 minutes ago ';
+  if (diffDays <= 60) return ' 30 minutes ago ';
+  return ` ${new Date().toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })} `;
 };

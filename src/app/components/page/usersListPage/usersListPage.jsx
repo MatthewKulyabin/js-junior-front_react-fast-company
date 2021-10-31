@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
 
-import { PAGE_SIZE } from '../core/CONSTS';
-import { pagersNumber, paginate } from '../core/utils';
-import GroupList from './groupList';
-import Pagination from './pagination';
-import SearchStatus from './searchStatus';
-import UsersTable from './usersTable';
-import TextField from './textField';
+import { PAGE_SIZE } from '../../../core/CONSTS';
+import { pagersNumber, paginate } from '../../../core/utils';
+import GroupList from '../../common/groupList';
+import Pagination from '../../common/pagination/pagination';
+import SearchStatus from '../../ui/searchStatus';
+import UsersTable from '../../ui/usersTable';
+import TextField from '../../common/form/textField';
 
-const UsersList = ({ users, professions, onDelete }) => {
+const UsersListPage = ({ users, professions, onDelete }) => {
   const [selectedProf, setSelectedProf] = useState();
   const [sortBy, setSortBy] = useState({ path: 'name', order: 'asc' });
   const [searchUser, setSearchUser] = useState('');
@@ -101,4 +101,4 @@ const UsersList = ({ users, professions, onDelete }) => {
   );
 };
 
-export default UsersList;
+export default UsersListPage;

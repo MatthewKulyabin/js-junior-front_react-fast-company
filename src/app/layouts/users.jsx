@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Route, Switch } from 'react-router';
 
 import api from '../api';
-import UserPage from './userPage';
-import UsersList from './usersList';
+import UserEditPage from '../components/page/userEditPage';
+import UserPage from '../components/page/userPage';
+import UsersListPage from '../components/page/usersListPage';
 
 const Users = () => {
   const [users, setUsers] = useState();
@@ -26,10 +27,14 @@ const Users = () => {
           path="/users"
           render={() =>
             (users && professions && (
-              <UsersList {...{ users, professions }} onDelete={handleDelete} />
+              <UsersListPage
+                {...{ users, professions }}
+                onDelete={handleDelete}
+              />
             )) || <h1>Loading</h1>
           }
         />
+        <Route path="/users/:id/edit" component={UserEditPage} />
         <Route path="/users/:id" component={UserPage} />
       </Switch>
     </>
