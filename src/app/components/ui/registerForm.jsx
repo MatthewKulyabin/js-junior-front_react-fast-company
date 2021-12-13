@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { validator } from '../../utils/ validator';
 import TextField from '../common/form/textField';
-import api from '../../api';
 import SelectField from '../common/form/selectField';
 import RadioField from '../common/form/radio.Field';
 import MultiSelectField from '../common/form/multiSelectField';
 import CheckBoxField from '../common/form/checkBoxField';
+import { useQuality } from '../../hooks/useQuality';
+import { useProfession } from '../../hooks/useProfession';
+import { useAuth } from '../../hooks/useAuth';
+import { useHistory } from 'react-router';
 
 const RegisterForm = () => {
+  const history = useHistory();
   const [data, setData] = useState({
     email: '',
     password: '',
@@ -16,13 +20,17 @@ const RegisterForm = () => {
     qualities: [],
     licence: false,
   });
-  const [qualities, setQualities] = useState({});
-  const [professions, setProfession] = useState([]);
+
+  const { signUp } = useAuth();
+  const { qualities } = useQuality();
+  const qualitiesList = qualities.map((q) => ({ label: q.name, value: q._id }));
+  const { isLoading, professions } = useProfession();
+  const professionsList = professions.map((p) => ({
+    label: p.name,
+    value: p._id,
+  }));
   const [errors, setErrors] = useState({});
-  useEffect(() => {
-    api.professions.fetchAll().then((data) => setProfession(data));
-    api.qualities.fetchAll().then((data) => setQualities(data));
-  }, []);
+
   const handleChange = (target) => {
     setData((prevState) => ({
       ...prevState,
@@ -75,70 +83,83 @@ const RegisterForm = () => {
   };
   const isValid = Object.keys(errors).length === 0;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const isValid = validate();
     if (!isValid) return;
-    console.log(data);
+    const newData = {
+      ...data,
+      qualities: data.qualities.map((q) => q.value),
+    };
+    try {
+      await signUp(newData);
+      history.push('/');
+    } catch (error) {
+      setErrors(error);
+    }
   };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <TextField
-        label="Электронная почта"
-        name="email"
-        value={data.email}
-        onChange={handleChange}
-        error={errors.email}
-      />
-      <TextField
-        label="Пароль"
-        type="password"
-        name="password"
-        value={data.password}
-        onChange={handleChange}
-        error={errors.password}
-      />
-      <SelectField
-        label="Выбери свою профессию"
-        defaultOption="Choose..."
-        options={professions}
-        onChange={handleChange}
-        value={data.profession}
-        error={errors.profession}
-      />
-      <RadioField
-        options={[
-          { name: 'Male', value: 'male' },
-          { name: 'Female', value: 'female' },
-          { name: 'Other', value: 'other' },
-        ]}
-        value={data.sex}
-        name="sex"
-        onChange={handleChange}
-        label="Выберите ваш пол"
-      />
-      <MultiSelectField
-        options={qualities}
-        onChange={handleChange}
-        name="qualities"
-        label="Выберите ваши качесвта"
-      />
-      <CheckBoxField
-        value={data.licence}
-        onChange={handleChange}
-        name="licence"
-        error={errors.licence}
-      >
-        Подтвердить <a>лицензионное соглашение</a>
-      </CheckBoxField>
-      <button
-        type="submit"
-        disabled={!isValid}
-        className="btn btn-primary w-100 mx-auto"
-      >
-        Submit
-      </button>
-    </form>
+    (!isLoading && qualities && (
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Электронная почта"
+          name="email"
+          value={data.email}
+          onChange={handleChange}
+          error={errors.email}
+        />
+        <TextField
+          label="Пароль"
+          type="password"
+          name="password"
+          value={data.password}
+          onChange={handleChange}
+          error={errors.password}
+        />
+        <SelectField
+          label="Выбери свою профессию"
+          name="profession"
+          defaultOption="Choose..."
+          options={professionsList}
+          onChange={handleChange}
+          value={data.profession}
+          error={errors.profession}
+        />
+        <RadioField
+          options={[
+            { name: 'Male', value: 'male' },
+            { name: 'Female', value: 'female' },
+            { name: 'Other', value: 'other' },
+          ]}
+          value={data.sex}
+          name="sex"
+          onChange={handleChange}
+          label="Выберите ваш пол"
+        />
+        <MultiSelectField
+          options={qualitiesList}
+          onChange={handleChange}
+          name="qualities"
+          label="Выберите ваши качесвта"
+        />
+        <CheckBoxField
+          value={data.licence}
+          onChange={handleChange}
+          name="licence"
+          error={errors.licence}
+        >
+          Подтвердить <a>лицензионное соглашение</a>
+        </CheckBoxField>
+        <button
+          type="submit"
+          disabled={!isValid}
+          className="btn btn-primary w-100 mx-auto"
+        >
+          Submit
+        </button>
+      </form>
+    )) || <h1>Loading</h1>
   );
 };
 

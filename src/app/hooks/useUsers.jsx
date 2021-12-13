@@ -28,6 +28,7 @@ export const UserProvider = ({ children }) => {
   const getUsers = async () => {
     try {
       const { content } = await userService.get();
+
       setUsers(content);
       setIsLoading(false);
     } catch (error) {
