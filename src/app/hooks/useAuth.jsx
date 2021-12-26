@@ -2,93 +2,164 @@ import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-
 import userService from '../services/user.service';
-import { setTokens } from '../services/localStorage.service';
+import localStorageService, {
+  removeAuthData,
+  setTokens,
+} from '../services/localStorage.service';
+import { useHistory } from 'react-router-dom';
 
-const httpAuth = axios.create();
-
+export const httpAuth = axios.create({
+  baseURL: 'https://identitytoolkit.googleapis.com/v1/',
+  params: {
+    key: process.env.REACT_APP_FIREBASE_KEY,
+  },
+});
 const AuthContext = React.createContext();
 
 export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState({});
+const AuthProvider = ({ children }) => {
+  const history = useHistory();
+
+  const [currentUser, setUser] = useState();
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState();
 
   useEffect(() => {
     if (error !== null) {
-      toast.error(error);
+      toast(error);
       setError(null);
     }
   }, [error]);
 
-  const signUp = async ({ email, password, ...rest }) => {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${process.env.REACT_APP_FIREBASE_KEY}`;
+  useEffect(() => {
+    if (localStorageService.getAccessToken()) {
+      getUserData();
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  async function logIn({ email, password }) {
     try {
-      const { data } = await httpAuth.post(url, {
+      const { data } = await httpAuth.post(`accounts:signInWithPassword`, {
         email,
         password,
         returnSecureToken: true,
       });
       setTokens(data);
-      await createUser({ _id: data.localId, email, ...rest });
+      await getUserData();
     } catch (error) {
       errorCatcher(error);
-      const { code, message } = error.response.data.error;
-      if (code === 400) {
-        if (message === 'EMAIL_EXISTS') {
-          const errorObject = { email: 'This email has been already used' };
-          throw errorObject;
-        }
-      }
-    }
-  };
-
-  const login = async ({ email, password, ...rest }) => {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.REACT_APP_FIREBASE_KEY}`;
-    try {
-      const { data } = await httpAuth.post(url, {
-        email,
-        password,
-        returnSecureToken: true,
-      });
-      setTokens(data);
-    } catch (error) {
       const { code, message } = error.response.data.error;
       console.log(code, message);
       if (code === 400) {
-        if (message === 'INVALID_PASSWORD') {
-          const errorObject = { password: 'Wrong Password' };
-          throw errorObject;
+        switch (message) {
+          case 'INVALID_PASSWORD':
+            throw new Error('Email или пароль введены некорректно');
+
+          default:
+            throw new Error('Слишком много попыток входа. Попробуйте позднее');
         }
-        if (message === 'EMAIL_NOT_FOUND') {
-          const errorObject = { email: 'Wrong Email' };
+      }
+    }
+  }
+
+  const logOut = () => {
+    removeAuthData();
+    setUser(null);
+    history.push('/');
+  };
+
+  async function signUp({ email, password, ...rest }) {
+    try {
+      const { data } = await httpAuth.post(`accounts:signUp`, {
+        email,
+        password,
+        returnSecureToken: true,
+      });
+      setTokens(data);
+      await createUser({
+        _id: data.localId,
+        email,
+        rate: randomInt(1, 5),
+        completedMeetings: randomInt(0, 200),
+        image: `https://avatars.dicebear.com/api/avataaars/${(Math.random() + 1)
+          .toString(36)
+          .substring(7)}.svg`,
+        ...rest,
+      });
+    } catch (error) {
+      errorCatcher(error);
+      const { code, message } = error.response.data.error;
+      console.log(code, message);
+      if (code === 400) {
+        if (message === 'EMAIL_EXISTS') {
+          const errorObject = {
+            email: 'Пользователь с таким Email уже существует',
+          };
           throw errorObject;
         }
       }
     }
-  };
-
-  const createUser = async (data) => {
+  }
+  async function createUser(data) {
     try {
-      const { content } = userService.create(data);
-      setCurrentUser(content);
+      const { content } = await userService.create(data);
+      setUser(content);
     } catch (error) {
       errorCatcher(error);
     }
+  }
+
+  const updateUser = async (userId, data) => {
+    console.log(userId, data);
+    try {
+      const { content } = await userService.update({
+        ...data,
+        _id: userId,
+        rate: randomInt(1, 5),
+        completedMeetings: randomInt(0, 200),
+        image: `https://avatars.dicebear.com/api/avataaars/${(Math.random() + 1)
+          .toString(36)
+          .substring(7)}.svg`,
+      });
+      console.log(content);
+    } catch (error) {
+      throw new Error('Что-то пошло не так');
+    }
   };
 
-  const errorCatcher = (error) => {
+  const getUserData = async () => {
+    try {
+      const { content } = await userService.getCurrentUser();
+      setUser(content);
+    } catch (error) {
+      errorCatcher(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  };
+
+  function errorCatcher(error) {
+    console.log(error);
     const { message } = error.response.data;
     setError(message);
-  };
+  }
 
+  console.log(currentUser);
   return (
-    <AuthContext.Provider value={{ signUp, currentUser, login }}>
-      {children}
+    <AuthContext.Provider
+      value={{ signUp, logIn, logOut, currentUser, updateUser }}
+    >
+      {!isLoading ? children : 'Loading...'}
     </AuthContext.Provider>
   );
 };
@@ -99,3 +170,5 @@ AuthProvider.propTypes = {
     PropTypes.node,
   ]),
 };
+
+export default AuthProvider;

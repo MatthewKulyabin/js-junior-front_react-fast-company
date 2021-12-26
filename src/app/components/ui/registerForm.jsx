@@ -17,14 +17,15 @@ const RegisterForm = () => {
     password: '',
     profession: '',
     sex: 'male',
+    name: '',
     qualities: [],
     licence: false,
   });
 
   const { signUp } = useAuth();
+  const { isLoading, professions } = useProfession();
   const { qualities } = useQuality();
   const qualitiesList = qualities.map((q) => ({ label: q.name, value: q._id }));
-  const { isLoading, professions } = useProfession();
   const professionsList = professions.map((p) => ({
     label: p.name,
     value: p._id,
@@ -44,6 +45,15 @@ const RegisterForm = () => {
       },
       isEmail: {
         message: 'Email введен некорректно',
+      },
+    },
+    name: {
+      isRequired: {
+        message: 'Имя обезательно для заполнения',
+      },
+      min: {
+        message: 'Имя должно состаять миниму из 3 символов',
+        value: 3,
       },
     },
     password: {
@@ -99,6 +109,8 @@ const RegisterForm = () => {
     }
   };
 
+  console.log(qualities);
+
   return (
     (!isLoading && qualities && (
       <form onSubmit={handleSubmit}>
@@ -108,6 +120,13 @@ const RegisterForm = () => {
           value={data.email}
           onChange={handleChange}
           error={errors.email}
+        />
+        <TextField
+          label="Имя"
+          name="name"
+          value={data.name}
+          onChange={handleChange}
+          error={errors.name}
         />
         <TextField
           label="Пароль"

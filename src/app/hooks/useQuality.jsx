@@ -31,6 +31,7 @@ export const QualityProvider = ({ children }) => {
       setQualities(content);
       setIsLoading(false);
     } catch (error) {
+      console.log(error);
       errorCatcher(error);
     }
   };
