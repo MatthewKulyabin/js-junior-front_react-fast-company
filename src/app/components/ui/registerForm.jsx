@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+
 import { validator } from '../../utils/ validator';
 import TextField from '../common/form/textField';
 import SelectField from '../common/form/selectField';
 import RadioField from '../common/form/radio.Field';
 import MultiSelectField from '../common/form/multiSelectField';
 import CheckBoxField from '../common/form/checkBoxField';
-import { useQuality } from '../../hooks/useQuality';
-import { useProfession } from '../../hooks/useProfession';
-import { useAuth } from '../../hooks/useAuth';
-import { useHistory } from 'react-router';
+import { getQualities } from '../../store/qualities';
+import {
+  getProfessionsList,
+  getProfessionsLoadingStatus,
+} from '../../store/professions';
+import { signUp } from '../../store/users';
 
 const RegisterForm = () => {
-  const history = useHistory();
+  const dispatch = useDispatch();
   const [data, setData] = useState({
     email: '',
     password: '',
@@ -22,9 +26,9 @@ const RegisterForm = () => {
     licence: false,
   });
 
-  const { signUp } = useAuth();
-  const { isLoading, professions } = useProfession();
-  const { qualities } = useQuality();
+  const isLoading = useSelector(getProfessionsLoadingStatus());
+  const professions = useSelector(getProfessionsList());
+  const qualities = useSelector(getQualities());
   const qualitiesList = qualities.map((q) => ({ label: q.name, value: q._id }));
   const professionsList = professions.map((p) => ({
     label: p.name,
@@ -101,15 +105,8 @@ const RegisterForm = () => {
       ...data,
       qualities: data.qualities.map((q) => q.value),
     };
-    try {
-      await signUp(newData);
-      history.push('/');
-    } catch (error) {
-      setErrors(error);
-    }
+    dispatch(signUp(newData));
   };
-
-  console.log(qualities);
 
   return (
     (!isLoading && qualities && (

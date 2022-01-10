@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import userService from '../services/user.service';
 import localStorageService, {
-  removeAuthData,
   setTokens,
 } from '../services/localStorage.service';
 import { useHistory } from 'react-router-dom';
@@ -22,26 +21,10 @@ export const useAuth = () => {
 };
 
 const AuthProvider = ({ children }) => {
-  const history = useHistory();
-
   const [currentUser, setUser] = useState();
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState();
-
-  useEffect(() => {
-    if (error !== null) {
-      toast(error);
-      setError(null);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    if (localStorageService.getAccessToken()) {
-      getUserData();
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+  const [isLoading, setLoading] = useState(true);
+  const history = useHistory();
 
   async function logIn({ email, password }) {
     try {
@@ -67,13 +50,25 @@ const AuthProvider = ({ children }) => {
       }
     }
   }
-
-  const logOut = () => {
-    removeAuthData();
+  function logOut() {
+    localStorageService.removeAuthData();
     setUser(null);
+    console.log('push');
     history.push('/');
-  };
-
+  }
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+  async function updateUserData(data) {
+    const { content } = await userService.update(data);
+    setUser(content);
+    try {
+      const { content } = await userService.update(data);
+      setUser(content);
+    } catch (error) {
+      errorCatcher(error);
+    }
+  }
   async function signUp({ email, password, ...rest }) {
     try {
       const { data } = await httpAuth.post(`accounts:signUp`, {
@@ -95,7 +90,6 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       errorCatcher(error);
       const { code, message } = error.response.data.error;
-      console.log(code, message);
       if (code === 400) {
         if (message === 'EMAIL_EXISTS') {
           const errorObject = {
@@ -109,55 +103,42 @@ const AuthProvider = ({ children }) => {
   async function createUser(data) {
     try {
       const { content } = await userService.create(data);
+      console.log(content);
       setUser(content);
     } catch (error) {
       errorCatcher(error);
     }
   }
-
-  const updateUser = async (userId, data) => {
-    console.log(userId, data);
-    try {
-      const { content } = await userService.update({
-        ...data,
-        _id: userId,
-        rate: randomInt(1, 5),
-        completedMeetings: randomInt(0, 200),
-        image: `https://avatars.dicebear.com/api/avataaars/${(Math.random() + 1)
-          .toString(36)
-          .substring(7)}.svg`,
-      });
-      console.log(content);
-    } catch (error) {
-      throw new Error('Что-то пошло не так');
-    }
-  };
-
-  const getUserData = async () => {
+  function errorCatcher(error) {
+    const { message } = error.response.data;
+    setError(message);
+  }
+  async function getUserData() {
     try {
       const { content } = await userService.getCurrentUser();
       setUser(content);
     } catch (error) {
       errorCatcher(error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const randomInt = (min, max) => {
-    return Math.floor(Math.random() * (max - min + 1) + min);
-  };
-
-  function errorCatcher(error) {
-    console.log(error);
-    const { message } = error.response.data;
-    setError(message);
   }
-
-  console.log(currentUser);
+  useEffect(() => {
+    if (localStorageService.getAccessToken()) {
+      getUserData();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (error !== null) {
+      toast(error);
+      setError(null);
+    }
+  }, [error]);
   return (
     <AuthContext.Provider
-      value={{ signUp, logIn, logOut, currentUser, updateUser }}
+      value={{ signUp, logIn, currentUser, logOut, updateUserData }}
     >
       {!isLoading ? children : 'Loading...'}
     </AuthContext.Provider>

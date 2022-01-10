@@ -1,68 +1,87 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { validator } from '../../../utils/ validator';
 import TextField from '../../common/form/textField';
 import SelectField from '../../common/form/selectField';
 import RadioField from '../../common/form/radio.Field';
 import MultiSelectField from '../../common/form/multiSelectField';
 import BackHistoryButton from '../../common/backButton';
-import { useProfession } from '../../../hooks/useProfession';
-import { useQuality } from '../../../hooks/useQuality';
-import { useAuth } from '../../../hooks/useAuth';
+import {
+  getQualities,
+  getQualitiesLoadingStatus,
+} from '../../../store/qualities';
+import {
+  getProfessionsList,
+  getProfessionsLoadingStatus,
+} from '../../../store/professions';
+import { getCurrentUserData, updateUser } from '../../../store/users';
 
 const EditUserPage = () => {
-  const { userId } = useParams();
-  const history = useHistory();
-  const [data, setData] = useState({
-    name: '',
-    email: '',
-    profession: '',
-    sex: 'male',
-    qualities: [],
-  });
-  const [errors, setErrors] = useState({});
-  const {
-    isLoading: professionsLoading,
-    professions,
-    getProfession,
-  } = useProfession();
-  const { isLoading: qualitiesLoading, qualities } = useQuality();
-  const { updateUser } = useAuth();
-
-  const qualitiesList = qualities.map((q) => ({ label: q.name, value: q._id }));
+  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState();
+  const currentUser = useSelector(getCurrentUserData());
+  const qualities = useSelector(getQualities());
+  const qualitiesLoading = useSelector(getQualitiesLoadingStatus());
+  const qualitiesList = qualities.map((q) => ({
+    label: q.name,
+    value: q._id,
+  }));
+  const professionLoading = useSelector(getProfessionsLoadingStatus());
+  const professions = useSelector(getProfessionsList());
   const professionsList = professions.map((p) => ({
     label: p.name,
     value: p._id,
   }));
 
-  const getQualities = (elements) => {
-    const qualitiesQrray = [];
-    for (const elem of elements) {
-      for (const qualy in qualities) {
-        if (elem.value === qualities[qualy]._id) {
-          qualitiesQrray.push(qualities[qualy]);
-        }
-      }
-    }
-    return qualitiesQrray;
-  };
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const isValid = validate();
     if (!isValid) return;
-    const { profession, qualities } = data;
-    try {
-      await updateUser(userId, {
+
+    dispatch(
+      updateUser({
         ...data,
-        profession: getProfession(profession),
-        qualities: getQualities(qualities),
-      });
-      history.push(`/users/${userId}`);
-    } catch (error) {
-      console.error(error);
-    }
+        qualities: data.qualities.map((q) => q.value),
+      })
+    );
   };
+  function getQualitiesListByIds(qualitiesIds) {
+    const qualitiesArray = [];
+    for (const qualId of qualitiesIds) {
+      for (const quality of qualities) {
+        if (quality._id === qualId) {
+          qualitiesArray.push(quality);
+          break;
+        }
+      }
+    }
+    return qualitiesArray;
+  }
+  const transformData = (data) => {
+    const result = getQualitiesListByIds(data).map((qual) => ({
+      label: qual.name,
+      value: qual._id,
+    }));
+
+    return result;
+  };
+  useEffect(() => {
+    if (!professionLoading && !qualitiesLoading && currentUser && !data) {
+      setData({
+        ...currentUser,
+        qualities: transformData(currentUser.qualities),
+      });
+    }
+  }, [professionLoading, qualitiesLoading, currentUser, data]);
+  useEffect(() => {
+    if (data && isLoading) {
+      setIsLoading(false);
+    }
+  }, [data]);
 
   const validatorConfog = {
     email: {
@@ -73,18 +92,10 @@ const EditUserPage = () => {
         message: 'Email введен некорректно',
       },
     },
+
     name: {
       isRequired: {
-        message: 'Имя обезательно для заполнения',
-      },
-      min: {
-        message: 'Имя должно состаять миниму из 3 символов',
-        value: 3,
-      },
-    },
-    profession: {
-      isRequired: {
-        message: 'Обязательно выберите вашу профессию',
+        message: 'Введите ваше имя',
       },
     },
   };
@@ -107,9 +118,7 @@ const EditUserPage = () => {
       <BackHistoryButton />
       <div className="row">
         <div className="col-md-6 offset-md-3 shadow p-4">
-          {!professionsLoading &&
-          !qualitiesLoading &&
-          Object.keys(professions).length > 0 ? (
+          {!isLoading && Object.keys(professions).length > 0 ? (
             <form onSubmit={handleSubmit}>
               <TextField
                 label="Имя"
@@ -127,11 +136,10 @@ const EditUserPage = () => {
               />
               <SelectField
                 label="Выбери свою профессию"
-                name="profession"
                 defaultOption="Choose..."
+                name="profession"
                 options={professionsList}
                 onChange={handleChange}
-                value={data.profession}
                 error={errors.profession}
               />
               <RadioField
@@ -149,7 +157,6 @@ const EditUserPage = () => {
                 defaultValue={data.qualities}
                 options={qualitiesList}
                 onChange={handleChange}
-                values
                 name="qualities"
                 label="Выберите ваши качесвта"
               />
